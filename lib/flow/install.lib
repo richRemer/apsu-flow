@@ -1,0 +1,41 @@
+#!/bin/bash -e
+
+usage () {
+  echo "$(basename "$0") [--prefix=DIR]"
+}
+
+fail_badarg () {
+  echo "$0: illegal option -- $1" >&2
+  return 1
+}
+
+fail_exarg () {
+  echo "$0: unexpected argument -- $1" >&2
+  return 1
+}
+
+install () {
+  local install_dir=$(res-read installer.install_dir)
+  local install_tarball=$(res-read installer.install_tarball)
+
+  while test $# -gt 0; do
+    case "$1" in
+      --help)     usage;                  return;;
+      --prefix)   install_dir="$2";       shift 2 || fail_noarg "$@";;
+      --prefix=*) install_dir="${1#*=}";  shift;;
+      --)                                 shift; break;;
+      --*)                                fail_badarg ${1:2};;
+      -*)                                 fail_badarg ${1:1:1};;
+      *)                                  fail_exarg "$@";;
+    esac
+  done
+
+  mkdir -p "$install_dir"
+
+  if ! test -w "$install_dir"; then
+    echo "$install_dir is not writable" >&2
+    return 1
+  fi
+
+  res-read "$install_tarball" | tar xzv -C "$install_dir"
+}

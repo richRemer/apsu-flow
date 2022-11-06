@@ -1,0 +1,93 @@
+#!/bin/bash -e
+
+declare script=$(realpath "$0")
+declare bin=$(dirname "$script")
+declare lib=$(dirname "$bin")/lib/flow
+declare cmd=$(basename "$0")
+declare tarball installer overwrite
+declare prefix=/
+declare -a args=()
+declare res
+
+usage () {
+  echo "$cmd [-f] [--prefix=DIR] <tarball> [<installer>]"
+}
+
+fail_badarg () {
+  echo "$cmd: illegal option -- $1" >&2
+  return 1
+}
+
+fail_exarg () {
+  echo "$cmd: unexpected argument -- $1" >&2
+  return 1
+}
+
+fail_tarball () {
+  echo "$cmd: missing required tarball" >&2
+  return 1
+}
+
+fail_noarg () {
+  echo "$cmd: option requires an argument -- $1" >&2
+  return 1
+}
+
+installer_name () {
+  local tarball=$(basename "$1")
+
+  if test "$tarball" != "${tarball%.tar.gz}"; then
+    echo "${tarball%.tar.gz}"
+  elif test "$tarball" != "${tarball%.tgz}"; then
+    echo "${tarball%.tgz}"
+  else
+    echo install-"$tarball"
+  fi
+}
+
+while test $# -gt 0; do
+  case "$1" in
+    --prefix)   prefix="$2";          shift 2 || fail_noarg "$@";;
+    --prefix=*) prefix="${1#*=}";     shift;;
+    --force|-f) overwrite=1;          shift;;
+    --)                               shift; break;;
+    --*)                              fail_badarg ${1:2};;
+    -*)                               fail_badarg ${1:1:1};;
+    *)          args+=("$1");         test ${#args[@]} -gt 2 && fail_exarg "$@"; shift;;
+  esac
+done
+
+tarball="${args[0]}"
+
+if test ${#args[@]} -eq 0; then
+  fail_tarball
+elif test ${#args[@]} -eq 1; then
+  installer=$(installer_name "${args[0]}")
+else
+  installer="${args[1]}"
+fi
+
+# bootstrap resource lib
+source "$lib/res.lib"
+
+{
+  # start with shebang
+  echo '#!/bin/bash -e'
+
+  # include required libraries
+  res-read res.lib
+  res-read install.lib
+
+  # wrap up with call to install function and explicit exit
+  echo 'install "$@"'
+  echo exit
+
+  # embed resources
+  res-create installer.install_dir <<< "$prefix"
+  res-create installer.install_tarball <<< tarball
+  res-create tarball < "$tarball"
+} > "$installer"
+
+chmod +x "$installer"
+echo created installer in $installer
+

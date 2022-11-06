@@ -1,0 +1,76 @@
+#!/bin/bash -e
+
+declare FLOW_RES_LOADED
+declare -A FLOW_RES=()
+
+res-create () {
+  local name=$1
+
+  echo "#BEGIN RESOURCE:$name"
+  base64
+  echo "#END RESOURCE:$name"
+}
+
+res-loaded () {
+  if ! test "$FLOW_RES_LOADED"; then
+    res-load
+    FLOW_RES_LOADED=1
+  fi
+}
+
+res-load () {
+  local bundle="$0"
+  local marker name res
+  local -a markers
+  local -i line open close
+
+  readarray -t markers <<< $(grep -n '^#\(BEGIN\|END\) RESOURCE:' "$bundle")
+
+  for marker in "${markers[@]}"; do
+    line=${marker%%:*}
+    name=${marker##*:}
+
+    if test "$res" -a "$res" != "$name"; then
+      echo "failed to load resource -- $res" >&2
+      return 1
+    elif test "$res"; then
+      close=$((line-1))
+      FLOW_RES[$name]=$open:$close
+      res=
+    else
+      open=$((line+1))
+      close=$open
+      res=$name
+    fi
+  done
+
+  if test "$res"; then
+    echo "failed to load resource -- $res" >&2
+    return 1
+  fi
+
+  FLOW_RES_LOADED=1
+}
+
+res-read () {
+  local res=$1
+  local -i open close
+  local executable=$(realpath "$0")
+  local dir=$(dirname "$executable")/../lib/flow
+  local file="$dir/$res"
+
+  res-loaded
+
+  if test -v "FLOW_RES[$res]"; then
+    res=${FLOW_RES[$res]}
+    open=${res%:*}
+    close=${res#*:}
+    sed -n ${open},${close}p "$0" | base64 -d
+  elif test -f "$file"; then
+    cat "$file"
+  else
+    echo "invalid resource -- $res" >&2
+    return 1
+  fi
+}
+
