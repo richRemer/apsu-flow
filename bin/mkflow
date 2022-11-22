@@ -33,6 +33,11 @@ fail_noarg () {
   return 1
 }
 
+fail_force () {
+  echo "$cmd: path already exists -- $1 [try --force]" >&2
+  return 1;
+}
+
 installer_name () {
   local tarball=$(basename "$1")
 
@@ -47,6 +52,7 @@ installer_name () {
 
 while test $# -gt 0; do
   case "$1" in
+    --help)                           usage; exit;;
     --prefix)   prefix="$2";          shift 2 || fail_noarg "$@";;
     --prefix=*) prefix="${1#*=}";     shift;;
     --force|-f) overwrite=1;          shift;;
@@ -69,6 +75,11 @@ fi
 
 # bootstrap resource lib
 source "$lib/res.lib"
+
+# avoid accidental overwrite of installer
+if test -e "$installer" -a ! "$overwrite"; then
+  fail_force "$installer"
+fi
 
 {
   # start with shebang

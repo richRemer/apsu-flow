@@ -15,7 +15,7 @@ distclean: clean
 	rm -fr install-*
 
 $(installer): $(bundle)
-	bin/mkflow --prefix /usr/local $< $@
+	bin/mkflow -f --prefix /usr/local $< $@
 
 $(bundle): $(bundled)
 	tar czf $@ $^

@@ -12,3 +12,8 @@ History
  * generated installer extracts tarball
  * generated installer supports --prefix option
 
+### 0.0.1-beta2
+ * mkflow command supports --help option
+ * mkflow command supports --force option
+ * mkflow command refuses to overwrite existing installer
+ * mkflow command man page

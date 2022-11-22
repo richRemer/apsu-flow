@@ -1,0 +1,60 @@
+.TH MKFLOW 1 2022-11-22 "flow" "Apsu Flow"
+
+.SH NAME
+mkflow \- Create self-extracting installer.
+
+.SH SYNOPSIS
+\fBmkflow\fR [\fB-f\fR] [\fB--prefix\fR \fIdir\fR] \fItarball\fR [\fIinstaller\fR]
+.RS 4
+Create self-extracting \fIinstaller\fR from \fItarball\fR.
+.RE
+
+\fBmkflow\fR \fB--help\fR
+.RS 4
+Show brief usage information for \fBmkflow\fR command.
+.RE
+
+.SH DESCRIPTION
+The \fBmkflow\fR command is used to create a self-extracting \fIinstaller\fR
+from a \fItarball\fR.  If an \fIinstaller\fR path is not provided, one will be
+generated based on the \fItarball\fR name.  Unless the \fB-f\fR/\fB--force\fR
+option is used, the \fBmkflow\fR command will refuse to overwrite an existing
+installer file.
+
+The \fBtarball\fR contents will be extracted by the \fIinstaller\fR to the root
+directory, or the \fIdir\fR set by the \fB--prefix\fR option.
+
+.SH ARGUMENTS
+
+.TP
+\fItarball\fR
+.RS 4
+Path to \fItarball\fR to be extracted onto target machine by \fIinstaller\fR.
+.RE
+
+.TP
+\fIinstaller\fR
+.RS 4
+Path where \fIinstaller\fR is written.
+.RE
+
+.SH OPTIONS
+
+.TP
+\fB--help\fR
+.RS 4
+Display high-level summary of options and arguments.
+.RE
+
+.TP
+\fB-f\fR,\fB--force\fR
+.RS 4
+Overwrite \fIinstaller\fR if it already exists.
+.RE
+
+.TP
+\fB--prefix\fR \fIdir\fR
+.RS 4
+Set path where \fIinstaller\fR extracts \fItarball\fR.  Defaults to \fB/\fR.
+.RE
+
